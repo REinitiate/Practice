@@ -1,0 +1,54 @@
+#! /usr/bin/python3
+# -*- coding: utf-8 -*-
+ 
+import csv, sys, locale, sys
+from lxml import html
+import io
+
+reload(sys)
+
+sys.setdefaultencoding('utf-8')
+print locale.getpreferredencoding()
+
+
+
+def parse_item(item):
+
+    #print type(item.xpath('.//h4[@class="h12 talk-link__speaker"]/text()')[0].strip('\n'))
+    #print type(item.xpath('.//h4[@class="h9 m5"]/a/text()')[0].strip('\n'))
+
+
+    return {
+        'speaker': item.xpath('.//h4[@class="h12 talk-link__speaker"]/text()')[0].strip('\n'),
+        'title': item.xpath('.//h4[@class="h9 m5"]/a/text()')[0].strip('\n').decode('utf-8'),
+        'href': item.xpath('.//h4[@class="h9 m5"]/a/@href')[0].strip('\n'),
+        'views': item.xpath('.//span[@class="meta__val"]/text()')[0].split('\n')[1].strip('\n'),
+        'date': item.xpath('.//span[@class="meta__val"]/text()')[1].strip('\n')
+    }
+ 
+ 
+npages = 3
+ 
+print('Parse pages.')
+data = []
+for page_num in range(1, npages+1):
+    print(page_num)
+    root = html.parse('http://www.ted.com/talks?page=%s' % page_num)
+    items = root.xpath('//div[@id="browse-results"]//div[@class="col"]')
+    for item in items:
+        d = parse_item(item)
+        data.append(d)
+ 
+for d in data:
+    print type(d['title'])
+    print d['title'].encode('utf-8')
+
+
+print('Save data to file.')
+#with io.open('data.csv', 'w', encoding='utf-8') as f:
+with open('data.csv', 'w') as f:
+    writer = csv.DictWriter(f, fieldnames=data[0].keys())
+    writer.writeheader()
+    writer.writerows(data)
+ 
+print('Done.')
